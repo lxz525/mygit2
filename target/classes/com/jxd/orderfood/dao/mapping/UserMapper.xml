@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jxd.orderfood.dao.UserMapper">
+    <!--    Emp getUserByUnameAndPwd(String ename, String pwd);-->
+    <select id="getUserByUnameAndPwd" resultType="user">
+        select uname, role , password from user where uname = #{uname} and password = #{pwd}
+    </select>
+<!--    boolean updatePwd(@Param("map") Map<String, Object> map);-->
+    <update id="updatePwd">
+        update user set password = #{map.newPwd} where uname = #{map.ename}
+    </update>
+<!--    boolean insertUser(Map<String, String> map);-->
+    <insert id="insertUser">
+        insert into user ( uname ,password ,role , delflag )
+        values (
+                   #{ename}, "1234567",  #{role},  1
+               )
+    </insert>
+<!--    boolean deleteUserByEnames(List<String> enames);-->
+    <update id="deleteUserByEnames">
+        update user set delflag = 0
+        where uname in
+        <foreach collection="list" item="ename" open="(" separator="," close=")">
+            #{ename}
+        </foreach>
+    </update>
+<!--    boolean updateUser(Map<String, String> map);-->
+    <update id="updateUser">
+        update user set role = #{role}
+        where uname = #{ename}
+
+    </update>
+</mapper>

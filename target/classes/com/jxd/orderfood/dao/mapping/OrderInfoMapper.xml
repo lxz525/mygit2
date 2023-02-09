@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jxd.orderfood.dao.OrderInfoMapper">
+
+    <!--    String insertOrder(Map<String, String> map);-->
+    <insert id="insertOrder" useGeneratedKeys="true" keyProperty="reservationno" keyColumn="reservationno">
+        insert into orderinfo set applicationtime = #{orderMap.applicationtime},empno = #{orderMap.empno} ,
+         type = #{orderMap.type} , orderedcount = #{orderMap.ordercount}, total = #{orderMap.total}
+                                  ,state = #{orderMap.state}, remarks= #{orderMap.remarks}
+    </insert>
+<!--    boolean updateOrderState(@Param("state") String orderState);-->
+    <update id="updateOrderState" >
+        update orderinfo set state = #{map.state}
+        <if test="map.role == '个人' ">
+            ,applicationtime = #{map.applicationtime},empno = #{map.empno} ,
+            type = #{map.type} , orderedcount = #{map.ordercount}, total = #{map.total}
+            ,state = #{map.state}, remarks= #{map.remarks},reject = #{map.rejection}
+            where reservationno = #{map.reservationno}
+        </if>
+        <if test="map.role == '部门经理' or map.role == '管理员' ">
+            ,reject = #{map.rejection}
+            where reservationno in
+                (
+            <foreach collection="map.orderArr" item="pitem" separator=",">
+                        #{pitem}
+            </foreach>
+            )
+        </if>
+
+    </update>
+
+<!--    boolean delOrder(@Param("reservationno") String reservationno);-->
+    <delete id="delOrder">
+        delete from orderinfo where reservationno in (
+        <foreach collection="list" item="reservationno" separator=",">
+            #{reservationno}
+        </foreach>
+        )
+
+    </delete>
+</mapper>

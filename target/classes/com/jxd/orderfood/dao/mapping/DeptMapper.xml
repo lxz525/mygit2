@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jxd.orderfood.dao.DeptMapper">
+<!--    List<Dept> getAllDept();-->
+    <select id="getAllDept" resultType="java.util.HashMap">
+        select deptno,dname from dept where delflag = 1
+        <if test="queryMap.dname != null">
+            and dname like '%' #{queryMap.dname} '%'
+        </if>
+        order by deptno
+    </select>
+<!--    List<Dept> getAllDept2();-->
+    <select id="getAllDept2" resultType="dept">
+        select deptno,dname from dept where delflag = 1
+    </select>
+    <!--    List<Emp> getEmpsByDname(String dname);-->
+    <select id="getEmpsByDname" resultType="emp">
+        select ename, empno from emp where deptno  = (select deptno from dept where dname = #{dname}) and delflag = 1
+    </select>
+    <!--boolean deleteDept(int[] deptnos);-->
+    <delete id="deleteDept">
+        update dept set delflag = 0
+        where deptno in
+        <foreach collection="array" item="deptno" open="(" separator="," close=")">
+            #{deptno}
+        </foreach>
+    </delete>
+    <!--boolean insertDept(Dept dept);-->
+    <insert id="insertDept">
+        insert into dept(dname,delflag)
+        values (#{dname},1)
+    </insert>
+    <!--Dept selectDeptOne(@Param("de[tno") int deptno,
+                       @Param("dname") String dname);-->
+    <select id="selectDeptOne" resultType="Dept">
+        select deptno, dname from dept where delflag = 1
+            <if test="deptno != null">
+                and deptno = #{deptno}
+            </if>
+            <if test="dname != null">
+                and dname = #{dname}
+            </if>
+    </select>
+
+    <!--boolean updateDept(Dept dept);-->
+    <update id="updateDept">
+        update dept set dname = #{dname}
+        where deptno = #{deptno}
+    </update>
+</mapper>

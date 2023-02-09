@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jxd.orderfood.dao.FoodMapper">
+<!--    List<Food> getAllFood();-->
+    <select id="getAllFood" resultType="food">
+        select foodno,foodname,price from food where delflag = 1
+    </select>
+<!--    IPage<Dept> getAllFood2(IPage<Dept> pages, Map<String, String> map);-->
+    <select id="getAllFood2" resultType="food">
+        select foodno,foodname,price from food where delflag = 1
+        <if test="map.foodname != null and map.foodname != null">
+            and foodname like '%' #{map.foodname} '%'
+        </if>
+        order by foodno
+    </select>
+<!--    boolean insertFood(Food food);-->
+    <insert id="insertFood">
+        insert into food(foodname,price,delflag)
+        values (#{foodname},#{price},1)
+    </insert>
+<!--    Food selectFoodOne(Object o, String foodname);-->
+    <select id="selectFoodOne" resultType="food">
+        select foodno, foodname,price from food where delflag = 1
+            <if test="foodname != null">
+                and foodname = #{foodname}
+            </if>
+            <if test="foodno != null">
+                and foodno = #{foodno}
+            </if>
+    </select>
+<!--    boolean updateFood(Food food);-->
+    <update id="updateFood">
+        update food set foodname = #{foodname} , price = #{price}
+        where foodno = #{foodno}
+    </update>
+<!--    boolean deleteFood(int[] foodnos);-->
+    <update id="deleteFood">
+        update food set delflag = 0
+        where foodno in
+        <foreach collection="list" item="foodno" open="(" separator="," close=")">
+            #{foodno}
+        </foreach>
+    </update>
+</mapper>

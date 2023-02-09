@@ -1,0 +1,14 @@
+server:
+  port: 8081
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/orderfood?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=UTC
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
+mybatis-plus:
+  mapper-locations: classpath*:com/jxd/orderfood/dao/mapping/*.xml
+  type-aliases-package: com.jxd.orderfood.model
+  #驼峰映射
+  configuration:
+    map-underscore-to-camel-case: true

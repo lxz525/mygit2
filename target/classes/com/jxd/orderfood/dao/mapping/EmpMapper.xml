@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jxd.orderfood.dao.EmpMapper">
+    <sql id="emp">
+        empno, ename, sex, tel, deptno, job from emp
+    </sql>
+
+    <sql id="showEmp">
+        empno, ename, sex, tel,  e.deptno, dname, job from emp e
+        join dept d on e.deptno = d.deptno
+    </sql>
+<!--    Map<String, Object> getEmp(String uname);-->
+    <select id="getEmp" resultType="map">
+        select e.empno,e.ename,e.sex,e.tel,e.job,d.dname,e.deptno from emp e join dept d on d.deptno = e.deptno
+              where e.ename = #{uname}
+    </select>
+
+
+<!--    IPage<OrderInfo>  getOrderList(IPage<OrderInfo> page, @Param("queryMap") Map<String, String> queryMap);-->
+    <select id="getOrderList" resultType="java.util.HashMap">
+        select oi.reservationno , d.dname , oi.applicationtime, group_concat(e.ename) enames
+             ,oi.orderedcount, oi.type ,oi.total ,oi.state ,oi.remarks,oi.reject
+        from orderinfo oi
+                 join orderinfo_emp oe on oi.reservationno = oe.reservationno
+                 join emp e on e.empno = oe.empno
+                 join dept d on e.deptno = d.deptno
+        <if test="queryMap.role == '个人' ">
+            where oi.empno = (select empno from emp where ename = #{queryMap.uname})
+            <if test="queryMap.date1 != '' and queryMap.date1 != null">
+                and oi.applicationtime between #{queryMap.date1} and #{queryMap.date2}
+            </if>
+        </if>
+        <if test="queryMap.role == '部门经理' ">
+            where oi.empno in (select empno from emp where deptno = (select deptno from emp where ename = #{queryMap.uname}) )
+            and state = "待部门确认"
+            <if test="queryMap.date1 != '' and queryMap.date1 != null">
+                and oi.applicationtime between #{queryMap.date1} and #{queryMap.date2}
+            </if>
+        </if>
+        <if test="queryMap.role == '管理员' ">
+            where state = "待管理员确认"
+            <if test="queryMap.date1 != '' and queryMap.date1 != null">
+                and oi.applicationtime between #{queryMap.date1} and #{queryMap.date2}
+            </if>
+        </if>
+        <if test="queryMap.role == 'All' ">
+            <where >
+            <if test="queryMap.uname != '' and queryMap.uname != null">
+                and oi.empno in (select empno from emp where ename like '%' #{queryMap.uname} '%' )
+            </if>
+            <if test="queryMap.reservationno != '' and queryMap.reservationno != null">
+                and oi.reservationno = #{queryMap.reservationno}
+            </if>
+            <if test="queryMap.state != '' and queryMap.state != null">
+                and oi.state = #{queryMap.state}
+            </if>
+            <if test="queryMap.date1 != '' and queryMap.date1 != null">
+                and oi.applicationtime between #{queryMap.date1} and #{queryMap.date2}
+            </if>
+            </where>
+        </if>
+           group by reservationno order by applicationtime desc
+    </select>
+<!--    List<Map<String, Object>> getOrderInfo(@Param("map") Map<String, Object> map1);-->
+    <select id="getOrderInfo" resultType="map">
+
+        select o.foodno, f.foodname, o.foodcount, o.totalprice
+        from ( select foodno, sum(count) as foodcount, sum(price * count) as totalprice
+                from orderfoodinfo where reservationno in (
+                    <foreach collection="list" item="reservationno" separator=",">
+                        #{reservationno}
+                    </foreach>
+                )
+               group by foodno
+               ) o
+        left join food f
+        on o.foodno = f.foodno
+    </select>
+
+<!--    String getDnameByUname(String uname);-->
+    <select id="getDnameByUname" resultType="String">
+        select d.dname from emp e inner join dept d on e.deptno = d.deptno where ename = #{uname}
+    </select>
+
+<!--    String getDeptEmpByUname(String uname);-->
+    <select id="getDeptEmpByUname" resultType="String">
+        select d.dname, e.ename from emp e inner join dept d on e.deptno = d.deptno where e.deptno = (select e.deptno from emp e where ename = #{uname})
+    </select>
+
+<!--    boolean updateEmp(@Param("map") Map<String, Object> map);-->
+    <update id="updateEmp">
+        update emp set ename = #{map.ename} ,sex = #{map.sex} ,tel = #{map.tel}, job = #{map.job} where empno = #{map.empno}
+    </update>
+<!--    boolean updateEmp2(Map<String, String> map);-->
+    <update id="updateEmp2">
+        update emp set sex = #{sex} ,tel = #{tel},
+                       job = #{job}, deptno = #{deptno} where empno = #{empno}
+    </update>
+    <!--List<Emp> selectEmpByDeptno(int deptno);-->
+    <select id="selectEmpByDeptno" resultType="Emp">
+        select <include refid="emp"></include>
+        where deptno = #{deptno}
+    </select>
+<!--    IPage<Emp> getEmpList(IPage<Emp> pages, @Param("queryMap") Map<String, String> map);-->
+    <select id="getEmpList" resultType="map">
+        select <include refid="showEmp"></include>
+        where ename like '%' #{queryMap.ename} '%' and e.delflag = 1
+        <if test="queryMap.deptno != '' and queryMap.deptno != null ">
+            and e.deptno = #{queryMap.deptno}
+        </if>
+        order by empno desc
+    </select>
+    <insert id="insertEmp">
+        insert into emp ( ename, sex, tel, deptno, job, delflag )
+        values (
+        #{ename}, #{sex}, #{tel},  #{deptno}, #{job}, 1
+        )
+    </insert>
+<!--    boolean deleteEmpByEnames(List<String> enames);-->
+    <update id="deleteEmpByEnames">
+        update emp set delflag = 0
+        where ename in
+        <foreach collection="list" item="ename" open="(" separator="," close=")">
+            #{ename}
+        </foreach>
+    </update>
+<!--    Map<String, Object> selectEmpByEname(String ename);-->
+    <select id="selectEmpByEname" resultType="map">
+        select empno, ename, sex, tel, deptno, job, role from emp e inner join user u on e.ename = u.uname
+        where e.ename = #{ename} and e.delflag = 1 and u.delflag = 1
+    </select>
+</mapper>

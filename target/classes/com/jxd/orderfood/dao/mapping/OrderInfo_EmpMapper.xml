@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jxd.orderfood.dao.OrderInfo_EmpMapper">
+<!--    boolean insertOrderInfo_Emp(String reservationno, List<Map> list);-->
+    <insert id="insertOrderInfo_Emp" parameterType="list">
+        insert into orderinfo_emp (reservationno, empno)
+        values
+        <foreach collection="list" item="pitem" separator=",">
+            (#{reservationno},#{pitem})
+        </foreach>
+    </insert>
+<!--    boolean delOrderInfo_Emp(String reservationno);-->
+    <delete id="delOrderInfo_Emp">
+        delete from orderinfo_emp where reservationno = #{reservationno}
+    </delete>
+<!--    boolean delOrderInfo_Emp1(List<String> list);-->
+    <delete id="delOrderInfo_Emp1">
+        delete from orderinfo_emp where reservationno in
+        (
+        <foreach collection="list" item="reservationno" separator=",">
+            #{reservationno}
+        </foreach>
+        )
+    </delete>
+<!--    List<String> getOrderEmpnos(@Param("map") Map<String, Object> map);-->
+    <select id="getOrderEmpnos" resultType="String">
+        select oe.empno from orderinfo_emp oe
+        where oe.reservationno in (
+            select o.reservationno  from orderinfo o
+            where o.applicationtime between #{map.date1} and #{map.date2}
+              and o.type = #{map.type}
+              and o.empno in (select empno from emp where deptno = ( select deptno from dept where dname = #{map.dname} ))
+              and o.state not in("未提交", "被驳回"))
+    </select>
+</mapper>
